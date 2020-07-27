@@ -13,7 +13,7 @@ exports.handler = async (event, context) => {
   const params = {
     TableName: process.env.TABLE_NAME, // get the table name from the automatically populated environment variables
     Item: {
-      id: shortid.generate, // modify with each invoke so the id does not repeat
+      id: shortid.generate(), // modify with each invoke so the id does not repeat
       content: 'This is my content' // modify content here
     },
     ConditionExpression: 'attribute_not_exists(id)', // do not overwrite existing entries
