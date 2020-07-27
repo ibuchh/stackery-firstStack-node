@@ -34,6 +34,13 @@ Resources:
         Variables:
           TABLE_NAME: !Ref Items
           TABLE_ARN: !GetAtt Items.Arn
+      Events:
+        ItemsApiGETitems:
+          Type: Api
+          Properties:
+            Path: /items
+            Method: GET
+            RestApiId: !Ref ItemsApi
   newItem:
     Type: AWS::Serverless::Function
     Properties:
@@ -55,6 +62,43 @@ Resources:
         Variables:
           TABLE_NAME: !Ref Items
           TABLE_ARN: !GetAtt Items.Arn
+      Events:
+        ItemsApiPOSTnewItem:
+          Type: Api
+          Properties:
+            Path: /newItem
+            Method: POST
+            RestApiId: !Ref ItemsApi
+  ItemsApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub
+        - ${ResourceName} From Stack ${StackTagName} Environment ${EnvironmentTagName}
+        - ResourceName: ItemsApi
+      StageName: !Ref EnvironmentAPIGatewayStageName
+      DefinitionBody:
+        swagger: '2.0'
+        info: {}
+        paths:
+          /items:
+            get:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${getItems.Arn}/invocations
+              responses: {}
+          /newItem:
+            post:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${newItem.Arn}/invocations
+              responses: {}
+      EndpointConfiguration: REGIONAL
+      TracingEnabled: true
+      Cors:
+        AllowHeaders: '''Authorization,Content-Type'''
+        AllowOrigin: '''*'''
 Parameters:
   StackTagName:
     Type: String
@@ -62,3 +106,6 @@ Parameters:
   EnvironmentTagName:
     Type: String
     Description: Environment Name (injected by Stackery at deployment time)
+  EnvironmentAPIGatewayStageName:
+    Type: String
+    Description: Environment name used for API Gateway Stage names (injected by Stackery at deployment time)
